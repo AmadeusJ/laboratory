@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Message Queue test server</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    </head>
+    <body>
+        <script type="text/javascript">
+            $(document).ready(function() {
+
+                // make websocket connection with server
+                const socketPath = "ws://192.168.0.11:5000/chat";
+                var socket = new WebSocket(socketPath);
+                var pingInterval = 1000 * 20        // 20 seconds 
+
+                // send data to Server
+                socket.onopen = function() {
+                    setInterval(function() {
+                        socket.send(JSON.stringify({ command: 'ping' }))
+                    }, pingInterval);
+
+                    socket.send(JSON.stringify({
+                            command: 'enter',
+                            channel: 1
+                        }))
+                };
+
+                // get data from Server
+                socket.onmessage = function(evt) {
+                    console.log(evt)
+                }
+
+            })
+        </script>
+    </body>
+
+</html>
+
+
