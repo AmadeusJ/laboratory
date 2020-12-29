@@ -98,7 +98,8 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    host_address = request.host_url
+    return render_template('index.html', host_address = host_address)
 
 @run_with_reloader
 def runserver():

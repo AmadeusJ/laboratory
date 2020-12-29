@@ -42,7 +42,7 @@ class AMQPBrokwer():
                     print('channel:', conn.__dict__)
                     # Queue 생성
                     self.queue = kombu.Queue(
-                        sock.gethostname() + "-" + self.pid, 
+                        sock.gethostname() + "-(ensure_consuming)-" + self.pid, 
                         auto_delete=True, 
                         expires=RABBITMQ_QUEUE_EXPIRES,
                         channel=channel
@@ -71,10 +71,44 @@ class AMQPBrokwer():
 
     def subscribe(self, key, socket, done_callback=None, force=False):
         self.ensure_consuming(force)
+        print('[KEY] ', key)
         if key not in self.sockets:
             self.sockets[key] = set()
-            print(self.sockets.__dict__)
+            print(self.sockets)
 
+        if socket in self.sockets[key] and not force:
+            return
+        
+        self.sockets[key].add(socket)       # 여기 parameter의 socket은 'WebSocketApplication'의 instance임
+        print(socket.__dict__)
+
+        if self.closed and not force: return
+        
+        while True:
+            try:
+                with ConnectionContext(self.connection) as conn:
+                    channel = conn.default_channel
+                    # exchange 생성
+                    exchange = kombu.Exchange(key, 'fanout', channel=channel, durable=False)
+                    exchange.declare()
+                    # Queue를 또 생성...?!
+                    queue = kombu.Queue(
+                        sock.gethostname() + "-(subscribe)-" + self.pid,
+                        auto_delete=True,
+                        expires=RABBITMQ_QUEUE_EXPIRES,
+                        channel=channel
+                    )
+                    queue.declare()
+                    queue.bind_to(exchange)
+                    break
+            except BrokenPipeError as err:
+                conn.release()
+                print("[ERROR] ", err)
+            
+            except Exception as err:
+                conn.release()
+                print("[ERROR] ", err)
+                break
 
 class ConnectionContext:
 

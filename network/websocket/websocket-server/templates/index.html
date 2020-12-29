@@ -10,7 +10,8 @@
             $(document).ready(function() {
 
                 // make websocket connection with server
-                const socketPath = "ws://192.168.0.11:5000/chat";
+                var hostAddres = "{{ host_address }}".replace('http', 'ws');
+                const socketPath = hostAddres + "chat";
                 var socket = new WebSocket(socketPath);
                 var pingInterval = 1000 * 20        // 20 seconds 
 
